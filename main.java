@@ -1,74 +1,133 @@
+import java.io.*;
 import java.util.Arrays;
-import java.util.Random;
+import java.util.Scanner;
 
 public class Main {
 
     public static void main(String[] args) {
-        int[] sizes = {1000, 5000, 10000};
-        Random rand = new Random();
+        Scanner scanner = new Scanner(System.in);
 
-        for (int size : sizes) {
-            int[] array = rand.ints(size, 0, 100000).toArray();
+        String[] files = {"src/resources/1000.txt", "src/resources/5000.txt", "src/resources/10000.txt"};
+        boolean keepRunning = true;
 
-            // Bubblesort
-            int[] array1 = Arrays.copyOf(array, array.length);
-            long startTime = System.nanoTime();
-            bubbleSort(array1);
-            long endTime = System.nanoTime();
-            System.out.println("BubbleSort (" + size + " numbers): " + (endTime - startTime) + " ns");
+        while (keepRunning) {
+            System.out.println("Escolha o arquivo de números:");
+            System.out.println("1. 1000 números");
+            System.out.println("2. 5000 números");
+            System.out.println("3. 10000 números");
+            int fileChoice = scanner.nextInt();
 
-            // Selectionsort
-            int[] array2 = Arrays.copyOf(array, array.length);
-            startTime = System.nanoTime();
-            selectionSort(array2);
-            endTime = System.nanoTime();
-            System.out.println("SelectionSort (" + size + " numbers): " + (endTime - startTime) + " ns");
+            if (fileChoice < 1 || fileChoice > 3) {
+                System.out.println("Escolha inválida. Programa encerrado.");
+                break;
+            }
 
-            // Quicksort
-            int[] array3 = Arrays.copyOf(array, array.length);
-            startTime = System.nanoTime();
-            quickSort(array3, 0, array3.length - 1);
-            endTime = System.nanoTime();
-            System.out.println("QuickSort (" + size + " numbers): " + (endTime - startTime) + " ns");
+            String selectedFile = files[fileChoice - 1];
+
+            System.out.println("Escolha o algoritmo de ordenação:");
+            System.out.println("1. BubbleSort");
+            System.out.println("2. SelectionSort");
+            System.out.println("3. QuickSort");
+            int algoChoice = scanner.nextInt();
+
+            if (algoChoice < 1 || algoChoice > 3) {
+                System.out.println("Escolha inválida. Programa encerrado.");
+                break;
+            }
+
+            try {
+                int[] array = readNumbersFromFile(selectedFile);
+
+                long startTime = System.nanoTime();
+                int[] sortedArray = null;
+                switch (algoChoice) {
+                    case 1:
+                        sortedArray = bubbleSort(array);
+                        System.out.println("BubbleSort executado.");
+                        break;
+                    case 2:
+                        sortedArray = selectionSort(array);
+                        System.out.println("SelectionSort executado.");
+                        break;
+                    case 3:
+                        sortedArray = quickSort(array, 0, array.length - 1);
+                        System.out.println("QuickSort executado.");
+                        break;
+                }
+                long endTime = System.nanoTime();
+
+                long durationInMs = (endTime - startTime) / 1_000_000;
+                long durationInNs = (endTime - startTime);
+
+                System.out.println("Tempo de execução: " + durationInMs + " ms / " + durationInNs + " ns");
+
+                System.out.println("Array ordenado: " + Arrays.toString(sortedArray));
+
+            } catch (IOException e) {
+                System.out.println("Erro ao ler o arquivo: " + selectedFile + " - " + e.getMessage());
+            }
+
+            System.out.println("1. Repetir processo");
+            System.out.println("2. Encerrar processo");
+            int continueChoice = scanner.nextInt();
+
+            if (continueChoice == 2) {
+                keepRunning = false;
+            }
         }
+
+        scanner.close();
+        System.out.println("Programa encerrado.");
     }
 
-    // Bubble Sort
-    public static void bubbleSort(int[] array) {
-        int n = array.length;
+    public static int[] readNumbersFromFile(String file) throws IOException {
+        BufferedReader reader = new BufferedReader(new FileReader(file));
+        return reader.lines().mapToInt(Integer::parseInt).toArray();
+    }
+
+    public static int[] bubbleSort(int[] array) {
+        int[] sortedArray = Arrays.copyOf(array, array.length);
+        int n = sortedArray.length;
         for (int i = 0; i < n - 1; i++) {
             for (int j = 0; j < n - i - 1; j++) {
-                if (array[j] > array[j + 1]) {
-                    int temp = array[j];
-                    array[j] = array[j + 1];
-                    array[j + 1] = temp;
+                if (sortedArray[j] > sortedArray[j + 1]) {
+                    int temp = sortedArray[j];
+                    sortedArray[j] = sortedArray[j + 1];
+                    sortedArray[j + 1] = temp;
                 }
             }
         }
+        return sortedArray;
     }
 
-    // Selection Sort
-    public static void selectionSort(int[] array) {
-        int n = array.length;
+    public static int[] selectionSort(int[] array) {
+        int[] sortedArray = Arrays.copyOf(array, array.length);
+        int n = sortedArray.length;
         for (int i = 0; i < n - 1; i++) {
             int minIndex = i;
             for (int j = i + 1; j < n; j++) {
-                if (array[j] < array[minIndex]) {
+                if (sortedArray[j] < sortedArray[minIndex]) {
                     minIndex = j;
                 }
             }
-            int temp = array[minIndex];
-            array[minIndex] = array[i];
-            array[i] = temp;
+            int temp = sortedArray[minIndex];
+            sortedArray[minIndex] = sortedArray[i];
+            sortedArray[i] = temp;
         }
+        return sortedArray;
     }
 
-    // Quick Sort
-    public static void quickSort(int[] array, int low, int high) {
+    public static int[] quickSort(int[] array, int low, int high) {
+        int[] sortedArray = Arrays.copyOf(array, array.length);
+        quickSortRecursive(sortedArray, low, high);
+        return sortedArray;
+    }
+
+    private static void quickSortRecursive(int[] array, int low, int high) {
         if (low < high) {
             int pi = partition(array, low, high);
-            quickSort(array, low, pi - 1);
-            quickSort(array, pi + 1, high);
+            quickSortRecursive(array, low, pi - 1);
+            quickSortRecursive(array, pi + 1, high);
         }
     }
 
